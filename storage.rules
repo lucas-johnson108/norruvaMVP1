@@ -1,0 +1,50 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Company documents
+    match /companies/{companyId}/{allPaths=**} {
+      allow read, write: if isCompanyMember(companyId);
+    }
+    
+    // Product documents
+    match /products/{productId}/{allPaths=**} {
+      allow read: if canAccessProduct(productId);
+      allow write: if canModifyProduct(productId);
+    }
+    
+    // Public assets
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // QR codes (public read)
+    match /qr-codes/{productId}.{format} {
+      allow read: if true;
+      allow write: if false; // System generated only
+    }
+    
+    // Helper functions (reuse from Firestore)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isCompanyMember(companyId) {
+      return isAuthenticated() && 
+             request.auth.token.companyId == companyId;
+    }
+    
+    function canAccessProduct(productId) {
+      // This is a simplified placeholder. In a real scenario, you'd likely want to
+      // read Firestore to check product ownership or permissions, which can be complex
+      // and have performance implications in Storage rules.
+      // Often, Storage rules rely on custom claims in the auth token or predictable path structures.
+      return isAuthenticated();
+    }
+    
+    function canModifyProduct(productId) {
+      // Similar to canAccessProduct, this is a simplified placeholder.
+      return isAuthenticated();
+    }
+  }
+}

@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - Norruva</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      background-color: #F0F0F0; /* Matches manifest background */
+      color: #1E293B; /* Matches manifest foreground */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .container {
+      background-color: #FFFFFF;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #6699CC; /* Primary color */
+      font-size: 2em;
+      margin-bottom: 0.5em;
+    }
+    p {
+      font-size: 1.1em;
+      line-height: 1.6;
+      margin-bottom: 1.5em;
+    }
+    a {
+      color: #6699CC;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .logo {
+      /* Basic Norruva-like SVG placeholder */
+      width: 60px;
+      height: 60px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <svg class="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M32 4C16.4317 4 4 16.4317 4 32C4 47.5683 16.4317 60 32 60C47.5683 60 60 47.5683 60 32C60 26.2437 58.1179 20.9291 54.8819 16.5M32 4L16.5 54.8819C20.9291 58.1179 26.2437 60 32 60C37.7563 60 43.0709 58.1179 47.5 54.8819L32 4Z" stroke="#6699CC" stroke-width="3"/>
+      <path d="M32 12L19.65 32L32 52L44.35 32L32 12Z" fill="#8FBC8F" stroke="#1E293B" stroke-width="1.5"/>
+      <circle cx="32" cy="32" r="6" fill="#FFFFFF" stroke="#6699CC" stroke-width="1.5"/>
+    </svg>
+    <h1>You're Offline</h1>
+    <p>It looks like you're not connected to the internet. Some features of Norruva may not be available.</p>
+    <p>Please check your connection and <a href="javascript:location.reload();">try again</a>.</p>
+  </div>
+</body>
+</html>
