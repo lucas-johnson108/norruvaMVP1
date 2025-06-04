@@ -1,0 +1,1 @@
+// This file will be deleted as part of the 'web' directory removal.
