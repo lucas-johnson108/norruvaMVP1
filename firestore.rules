@@ -1,0 +1,221 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is an admin or regulator
+    function isPlatformAdminOrRegulator() {
+      return request.auth.token.role in ['admin', 'regulator'];
+    }
+
+    // Helper function to check if user belongs to a company
+    function belongsToCompany(companyId) {
+      return request.auth.token.companyId == companyId;
+    }
+
+    // Helper function to check if user has a specific role within their company
+    function hasCompanyRole(companyId, role) {
+      return belongsToCompany(companyId) && request.auth.token.companyRole == role; // Assuming companyRole is a claim
+    }
+
+    // Companies collection
+    match /companies/{companyId} {
+      allow read: if request.auth != null && (belongsToCompany(companyId) || isPlatformAdminOrRegulator());
+      allow create: if request.auth != null; // Might be further restricted to platform admins
+      allow update: if request.auth != null && (hasCompanyRole(companyId, 'admin') || isPlatformAdminOrRegulator());
+      allow delete: if request.auth != null && isPlatformAdminOrRegulator(); // Typically only platform admins delete companies
+
+      // Users subcollection within a company
+      match /users/{userId} {
+        allow read: if request.auth != null && (belongsToCompany(companyId) || isPlatformAdminOrRegulator());
+        allow write: if request.auth != null && (
+                        (belongsToCompany(companyId) && request.auth.uid == userId) || // User edits their own profile within their company
+                        hasCompanyRole(companyId, 'admin') || // Company admin manages users in their company
+                        isPlatformAdminOrRegulator()
+                      );
+      }
+       match /apiKeys/{apiKeyId} {
+        allow read, write: if request.auth != null && (hasCompanyRole(companyId, 'admin') || isPlatformAdminOrRegulator());
+      }
+       match /billing/{billingId} {
+        allow read: if request.auth != null && (hasCompanyRole(companyId, 'admin') || isPlatformAdminOrRegulator());
+        allow write: if request.auth != null && isPlatformAdminOrRegulator(); // Usually only platform admins handle billing directly
+      }
+    }
+
+    // Products collection (top-level)
+    match /products/{productId} {
+      allow create: if request.auth != null && request.auth.token.companyId != null && request.resource.data.companyId == request.auth.token.companyId;
+      allow read: if (resource.data.metadata.visibility == 'public' && resource.data.verification.status == 'verified') ||
+                     (request.auth != null && belongsToCompany(resource.data.companyId)) ||
+                     (request.auth != null && isPlatformAdminOrRegulator()) ||
+                     (request.auth != null && request.auth.token.role == 'verifier'); // Verifiers might need read access to products they review
+
+      allow update: if request.auth != null && (
+                       (belongsToCompany(resource.data.companyId)) || // Product owner company members can update
+                       isPlatformAdminOrRegulator()
+                     );
+      allow delete: if request.auth != null && (belongsToCompany(resource.data.companyId) || isPlatformAdminOrRegulator());
+
+      match /versions/{versionId} {
+        allow read: if (resource.parent.data.metadata.visibility == 'public' && resource.parent.data.verification.status == 'verified') ||
+                       (request.auth != null && belongsToCompany(resource.parent.data.companyId)) ||
+                       (request.auth != null && isPlatformAdminOrRegulator());
+        // Write typically handled by system or product owner
+        allow write: if request.auth != null && (belongsToCompany(resource.parent.data.companyId) || isPlatformAdminOrRegulator());
+      }
+
+      match /accessLogs/{logId} {
+        allow read, write: if request.auth != null && (belongsToCompany(resource.parent.data.companyId) || isPlatformAdminOrRegulator());
+      }
+      match /verifications/{logId} { // Product-specific verification logs
+        allow read: if request.auth != null && (belongsToCompany(resource.parent.data.companyId) || isPlatformAdminOrRegulator() || request.auth.token.role == 'verifier');
+        allow write: if request.auth != null && ( (belongsToCompany(resource.parent.data.companyId) && request.resource.data.action == 'submitted_for_verification') || request.auth.token.role in ['verifier', 'admin']);
+      }
+    }
+
+    // Users collection (top-level user profiles)
+    match /users/{userId} {
+        allow read: if request.auth != null && (request.auth.uid == userId || isPlatformAdminOrRegulator());
+        // Users create their own profile, admins can also create/manage
+        allow create: if request.auth != null && (request.auth.uid == userId || isPlatformAdminOrRegulator());
+        allow update: if request.auth != null && (request.auth.uid == userId || isPlatformAdminOrRegulator());
+        allow delete: if request.auth != null && isPlatformAdminOrRegulator(); // Only admins can delete user profiles
+
+        match /sessions/{sessionId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId; // User manages their own sessions
+        }
+        match /preferences/{prefId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId; // User manages their own preferences
+        }
+    }
+
+    // VerificationRequests collection (for general requests before linking to a product)
+    match /verificationRequests/{verificationId} { // Renamed from 'verifications' for clarity if it's a general queue
+      allow read: if request.auth != null && (
+                      request.auth.token.role in ['verifier', 'admin', 'regulator'] ||
+                      (belongsToCompany(resource.data.companyId)) // Manufacturer can see their own item's verification status
+                    );
+      // Product owner submits for verification. request.resource.data contains the new verification document.
+      allow create: if request.auth != null && belongsToCompany(request.resource.data.companyId);
+      // Verifiers and admins can update verification status
+      allow update: if request.auth != null && request.auth.token.role in ['verifier', 'admin'];
+    }
+
+    // VerificationLogs collection (platform-wide audit of verification process)
+    match /verificationLogs/{logId} {
+        allow read: if request.auth != null && isPlatformAdminOrRegulator();
+        // Write access should be highly restricted, e.g., only by the system or verifiers during the process.
+        allow write: if request.auth != null && request.auth.token.role in ['verifier', 'admin'];
+    }
+
+    // Public products (denormalized, read-only)
+    match /publicProducts/{productId} {
+      allow read: if true;
+      allow write: if false; // Should be populated by a trusted backend process/function
+    }
+
+    // Webhooks (assuming company-specific, with a companyId field or nested)
+    // If top-level with companyId field:
+    match /webhooks/{webhookId} {
+      allow read, write: if request.auth != null && (
+        (belongsToCompany(resource.data.companyId) && request.auth.token.companyRole == 'admin') || // Company admin for their webhooks
+        isPlatformAdminOrRegulator()
+      );
+    }
+
+     // AuditLogs (typically restricted write, broader read for admins/auditors)
+    match /auditLogs/{logId} {
+        allow read: if request.auth != null && isPlatformAdminOrRegulator();
+        allow write: if false; // Only backend/system should write audit logs
+    }
+
+    // Analytics (similar to audit logs, restricted write, specific read access)
+    match /analytics/{analyticId} {
+        allow read: if request.auth != null && isPlatformAdminOrRegulator(); // Or company admin for their own company's analytics
+        allow write: if false; // Only backend/system
+    }
+    
+    // --- NEW BLOCKCHAIN HUB COLLECTIONS ---
+
+    // DPP NFT Collection
+    // Assumes documents in dpp_nfts have an 'owner' (UID) field and potentially 'companyId'
+    // 'admin' in request.auth.token implies a custom claim for platform admins.
+    match /dpp_nfts/{nftId} {
+      allow read: if true; // Public NFT data
+      allow write: if request.auth != null && 
+                      (request.auth.uid == resource.data.owner || 'admin' in request.auth.token);
+    }
+
+    // NORU Token Holdings
+    // Assumes documents in noru_holdings are keyed by userId and contain 'stakedAmount'
+    match /noru_holdings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // DAO Governance Proposals
+    // Assumes documents in dao_proposals have a 'creator' (UID) field.
+    match /dao_proposals/{proposalId} {
+      allow read: if true; // Public proposals
+      allow create: if request.auth != null && hasMinimumNoruStake(request.auth.uid, 5000);
+      allow update: if request.auth != null && 
+                       (request.auth.uid == resource.data.creator || 'admin' in request.auth.token);
+                       // Consider if proposals should be immutable after creation or if only specific fields are updatable by creator/admin.
+    }
+
+    // DAO Votes
+    // Assumes documents created in dao_votes will have 'proposalId' and 'userId' fields.
+    match /dao_votes/{voteId} {
+      allow read: if true; // Public voting records
+      allow create: if request.auth != null && 
+                       hasNoruStake(request.auth.uid) && 
+                       !hasAlreadyVoted(request.auth.uid, request.resource.data.proposalId);
+    }
+
+    // EBSI Credentials
+    // Assumes documents in ebsi_credentials have 'holder' (UID) and 'issuer' (UID or DID) fields.
+    // 'verifier' in request.auth.token implies a custom claim for verifier roles.
+    // 'issuer' in request.auth.token implies the user has an issuer role/claim.
+    match /ebsi_credentials/{credentialId} {
+      allow read: if request.auth != null && 
+                     (request.auth.uid == resource.data.holder || 
+                      request.auth.uid == resource.data.issuer || 
+                      'verifier' in request.auth.token || 
+                      'admin' in request.auth.token);
+      allow write: if request.auth != null && ('issuer' in request.auth.token || 'admin' in request.auth.token);
+    }
+
+    // Compliance Reports
+    // Assumes 'admin' or 'compliance_officer' roles in Firebase Auth custom claims.
+    match /compliance_reports/{reportId} {
+      allow read, write: if request.auth != null && 
+                            ('admin' in request.auth.token || 'compliance_officer' in request.auth.token);
+    }
+    
+    // --- END NEW BLOCKCHAIN HUB COLLECTIONS ---
+
+    // --- NEW HELPER FUNCTIONS ---
+    function hasNoruStake(userId) {
+      return exists(/databases/$(database)/documents/noru_holdings/$(userId)) && 
+             get(/databases/$(database)/documents/noru_holdings/$(userId)).data.stakedAmount > 0;
+    }
+
+    function hasMinimumNoruStake(userId, minStake) {
+      return exists(/databases/$(database)/documents/noru_holdings/$(userId)) && 
+             get(/databases/$(database)/documents/noru_holdings/$(userId)).data.stakedAmount >= minStake;
+    }
+
+    function hasAlreadyVoted(userId, proposalId) {
+      // Placeholder: Implement logic to check if a user has already voted on a proposal.
+      // This typically involves querying a subcollection or a specific document structure.
+      // For example, you might have /dao_proposals/{proposalId}/votes/{userId}
+      // return !exists(/databases/$(database)/documents/dao_proposals/$(proposalId)/votes/$(userId));
+      // Or, check a specific field in a user's vote document if dao_votes are structured differently.
+      // For this placeholder, returning false to allow voting during testing.
+      return false; 
+    }
+    // --- END NEW HELPER FUNCTIONS ---
+  }
+}
+
+    
