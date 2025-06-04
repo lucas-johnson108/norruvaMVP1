@@ -1,0 +1,155 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Norruva Palette (Light Mode) */
+    --background-hsl: 0 0% 94.1%; /* #F0F0F0 Light Grey */
+    --foreground-hsl: 215 39% 20%; /* #1E293B Deep Slate */
+
+    --card-hsl: 0 0% 100%; /* Pure White for cards */
+    --card-foreground-hsl: 215 39% 20%; /* Deep Slate for text on cards */
+
+    --popover-hsl: 0 0% 100%; /* Pure White for popovers */
+    --popover-foreground-hsl: 215 39% 20%; /* Deep Slate for text on popovers */
+
+    --primary-hsl: 210 40% 60%; /* #6699CC Desaturated Blue */
+    --primary-foreground-hsl: 0 0% 100%; /* Pure White for text on primary */
+
+    --secondary-hsl: 0 0% 96%; /* #F5F5F5 Lighter Grey (slightly off #F0F0F0 for subtle difference or use same as background) */
+    --secondary-foreground-hsl: 215 39% 25%; /* Slightly lighter slate for text on secondary */
+
+    --muted-hsl: 0 0% 90.2%; /* #E6E6E6 Medium Grey for muted elements */
+    --muted-foreground-hsl: 215 25% 45%; /* Mid-tone slate for muted text */
+
+    --accent-hsl: 120 25% 65.1%; /* #8FBC8F Soft Green */
+    --accent-foreground-hsl: 215 39% 15%; /* Darker Slate/Charcoal for text on soft green */
+    
+    --destructive-hsl: 0 84% 60%; /* Standard destructive red */
+    --destructive-foreground-hsl: 0 0% 98%; /* Light foreground for destructive */
+
+    --border-hsl: 0 0% 87.8%; /* #E0E0E0 Light Grey border, slightly darker than background */
+    --input-hsl: 0 0% 100%; /* White input background */
+    --ring-hsl: 120 25% 55.1%; /* Slightly darker Soft Green for focus rings, or use Primary */
+
+    /* Chart colors (can be refined) */
+    --chart-1: var(--primary-hsl); 
+    --chart-2: 120 25% 55.1%; /* Darker Soft Green */  
+    --chart-3: 210 40% 70%; /* Lighter Desaturated Blue */
+    --chart-4: 120 25% 75.1%; /* Lighter Soft Green */
+    --chart-5: 0 70% 65%; /* A contrasting color like a soft red/coral */
+    
+    --radius: 0.5rem;
+
+    /* Apply new HSL vars to ShadCN CSS variables */
+    --background: var(--background-hsl);
+    --foreground: var(--foreground-hsl);
+    --card: var(--card-hsl);
+    --card-foreground: var(--card-foreground-hsl);
+    --popover: var(--popover-hsl);
+    --popover-foreground: var(--popover-foreground-hsl);
+    --primary: var(--primary-hsl);
+    --primary-foreground: var(--primary-foreground-hsl);
+    --secondary: var(--secondary-hsl);
+    --secondary-foreground: var(--secondary-foreground-hsl);
+    --muted: var(--muted-hsl);
+    --muted-foreground: var(--muted-foreground-hsl);
+    --accent: var(--accent-hsl);
+    --accent-foreground: var(--accent-foreground-hsl);
+    --destructive: var(--destructive-hsl);
+    --destructive-foreground: var(--destructive-foreground-hsl);
+    --border: var(--border-hsl);
+    --input: var(--input-hsl);
+    --ring: var(--ring-hsl);
+  }
+
+  .dark {
+    /* Dark Theme (Example - needs careful color selection based on new palette) */
+    --background-hsl: 215 39% 12%; /* Very Dark Slate */
+    --foreground-hsl: 0 0% 90%; /* Light Grey */
+
+    --card-hsl: 215 39% 18%; /* Dark Slate for cards */
+    --card-foreground-hsl: 0 0% 90%; /* Light Grey for text on cards */
+
+    --popover-hsl: 215 39% 15%; /* Darker Slate for popovers */
+    --popover-foreground-hsl: 0 0% 90%;
+    
+    --primary-hsl: 210 40% 60%; /* Desaturated Blue (can be kept same or lightened) */
+    --primary-foreground-hsl: 0 0% 100%; 
+
+    --secondary-hsl: 215 39% 22%; /* Slightly Lighter Dark Slate */
+    --secondary-foreground-hsl: 0 0% 85%;
+
+    --muted-hsl: 215 39% 25%;
+    --muted-foreground-hsl: 0 0% 65%; /* Mid Grey for muted text */
+
+    --accent-hsl: 120 25% 65.1%; /* Soft Green (can be kept same or lightened) */
+    --accent-foreground-hsl: 215 39% 10%; /* Very dark for on soft green */
+    
+    --destructive-hsl: 0 70% 55%;
+    --destructive-foreground-hsl: 0 0% 95%;
+
+    --border-hsl: 215 39% 25%; 
+    --input-hsl: 215 39% 20%; 
+    --ring-hsl: 120 25% 55.1%; /* Darker Soft Green or Primary for rings */
+    
+    /* Apply new HSL vars to ShadCN CSS variables for dark mode */
+    --background: var(--background-hsl);
+    --foreground: var(--foreground-hsl);
+    --card: var(--card-hsl);
+    --card-foreground: var(--card-foreground-hsl);
+    --popover: var(--popover-hsl);
+    --popover-foreground: var(--popover-foreground-hsl);
+    --primary: var(--primary-hsl);
+    --primary-foreground: var(--primary-foreground-hsl);
+    --secondary: var(--secondary-hsl);
+    --secondary-foreground: var(--secondary-foreground-hsl);
+    --muted: var(--muted-hsl);
+    --muted-foreground: var(--muted-foreground-hsl);
+    --accent: var(--accent-hsl);
+    --accent-foreground: var(--accent-foreground-hsl);
+    --destructive: var(--destructive-hsl);
+    --destructive-foreground: var(--destructive-foreground-hsl);
+    --border: var(--border-hsl);
+    --input: var(--input-hsl);
+    --ring: var(--ring-hsl);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-space-grotesk), sans-serif;
+    @apply font-bold;
+  }
+
+  *:not(svg *) {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+}
+
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary rounded-full;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/60 rounded-full border-2 border-transparent bg-clip-content;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/80;
+  }
+}
